@@ -1,10 +1,14 @@
 import gym
 from sac import SACagent
 
-def main():
 
+def main():
     max_episode_num = 200
-    env = gym.make("Pendulum-v0")
+    try:
+        env = gym.make("Pendulum-v1")
+    except BaseException:
+        env = gym.make("Pendulum-v0")
+
     agent = SACagent(env)
 
     agent.train(max_episode_num)
@@ -12,6 +16,5 @@ def main():
     agent.plot_result()
 
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
