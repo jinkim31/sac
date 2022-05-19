@@ -1,3 +1,5 @@
 .idea
 __pycache__
 .DS_Store
+save_weights/pendulum_actor.h5
+save_weights/pendulum_critic.h5

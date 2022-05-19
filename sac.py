@@ -26,7 +26,6 @@ class Actor(Model):
         self.mu = Dense(action_dim, activation='tanh')
         self.std = Dense(action_dim, activation='softplus')
 
-
     def call(self, state):
         x = self.h1(state)
         x = self.h2(x)
@@ -35,7 +34,7 @@ class Actor(Model):
         std = self.std(x)
 
         # Scale output to [-action_bound, action_bound]
-        mu = Lambda(lambda x: x*self.action_bound)(mu)
+        mu = Lambda(lambda x: x * self.action_bound)(mu)
         # clipping std
         std = tf.clip_by_value(std, self.std_bound[0], self.std_bound[1])
 
@@ -62,7 +61,6 @@ class Critic(Model):
         self.h2 = Dense(32, activation='relu')
         self.h3 = Dense(16, activation='relu')
         self.q = Dense(1, activation='linear')
-
 
     def call(self, state_action):
         state = state_action[0]
@@ -97,7 +95,7 @@ class SACagent(object):
         # get action bound
         self.action_bound = env.action_space.high[0]
 
-        ## create actor and critic networks
+        # create actor and critic networks
         self.actor = Actor(self.action_dim, self.action_bound)
         self.actor.build(input_shape=(None, self.state_dim))
 
@@ -128,7 +126,6 @@ class SACagent(object):
         action, _ = self.actor.sample_normal(mu, std)
         return action.numpy()[0]
 
-
     ## transfer actor weights to target actor with a tau
     def update_target_network(self, TAU):
         phi = self.critic.get_weights()
@@ -137,16 +134,14 @@ class SACagent(object):
             target_phi[i] = TAU * phi[i] + (1 - TAU) * target_phi[i]
         self.target_critic.set_weights(target_phi)
 
-
     ## single gradient update on a single batch data
     def critic_learn(self, states, actions, q_targets):
         with tf.GradientTape() as tape:
             q = self.critic([states, actions], training=True)
-            loss = tf.reduce_mean(tf.square(q-q_targets))
+            loss = tf.reduce_mean(tf.square(q - q_targets))
 
         grads = tape.gradient(loss, self.critic.trainable_variables)
         self.critic_opt.apply_gradients(zip(grads, self.critic.trainable_variables))
-
 
     ## train the actor network
     def actor_learn(self, states):
@@ -161,23 +156,20 @@ class SACagent(object):
         grads = tape.gradient(loss, self.actor.trainable_variables)
         self.actor_opt.apply_gradients(zip(grads, self.actor.trainable_variables))
 
-
     ## computing soft Q target
     def q_target(self, rewards, q_values, dones):
         y_k = np.asarray(q_values)
-        for i in range(q_values.shape[0]): # number of batch
+        for i in range(q_values.shape[0]):  # number of batch
             if dones[i]:
                 y_k[i] = rewards[i]
             else:
                 y_k[i] = rewards[i] + self.GAMMA * q_values[i]
         return y_k
 
-
     ## load actor weights
     def load_weights(self, path):
         self.actor.load_weights(path + 'pendulum_actor.h5')
         self.critic.load_weights(path + 'pendulum_critic.h5')
-
 
     ## train the agent
     def train(self, max_episode_num):
@@ -194,7 +186,7 @@ class SACagent(object):
 
             while not done:
                 # visualize the environment
-                #self.env.render()
+                # self.env.render()
                 # pick an action: shape = (1,)
                 action = self.get_action(tf.convert_to_tensor([state], dtype=tf.float32))
                 # clip continuous action to be within action_bound
@@ -239,19 +231,17 @@ class SACagent(object):
                 time += 1
 
             ## display rewards every episode
-            print('Episode: ', ep+1, 'Time: ', time, 'Reward: ', episode_reward)
+            print('Episode: ', ep + 1, 'Time: ', time, 'Reward: ', episode_reward)
 
             self.save_epi_reward.append(episode_reward)
 
-
             ## save weights every episode
-            #print('Now save')
+            # print('Now save')
             self.actor.save_weights("./save_weights/pendulum_actor.h5")
             self.critic.save_weights("./save_weights/pendulum_critic.h5")
 
         np.savetxt('./save_weights/pendulum_epi_reward.txt', self.save_epi_reward)
         print(self.save_epi_reward)
-
 
     ## save them to file if done
     def plot_result(self):

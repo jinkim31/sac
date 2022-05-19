@@ -4,7 +4,7 @@ from sac import SACagent
 def main():
 
     max_episode_num = 200
-    env = gym.make("Pendulum-v1")
+    env = gym.make("Pendulum-v0")
     agent = SACagent(env)
 
     agent.train(max_episode_num)
